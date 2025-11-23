@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Evaluate Supplier - ERP System{% endblock %}
+
+{% block content %}
+<h1 class="mb-4"><span class="icon">⭐</span> Evaluate Supplier: {{ supplier.name }}</h1>
+
+<div class="card">
+    <div class="card-header">
+        <h5>Add Evaluation</h5>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="{{ form.rating.id_for_label }}" class="form-label">{{ form.rating.label }}</label>
+                {{ form.rating }}
+                {% if form.rating.help_text %}
+                    <div class="form-text">{{ form.rating.help_text }}</div>
+                {% endif %}
+                {% if form.rating.errors %}
+                    <div class="invalid-feedback d-block">
+                        {{ form.rating.errors }}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                <label for="{{ form.notes.id_for_label }}" class="form-label">{{ form.notes.label }}</label>
+                {{ form.notes }}
+                {% if form.notes.errors %}
+                    <div class="invalid-feedback d-block">
+                        {{ form.notes.errors }}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="{% url 'supplier_detail' supplier.pk %}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">Submit Evaluation</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<a href="{% url 'supplier_list' %}" class="btn btn-outline-primary mt-3">Back to Suppliers</a>
+{% endblock %}
+

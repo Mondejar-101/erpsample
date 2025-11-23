@@ -183,9 +183,31 @@ class ProcurementOrder(TimestampMixin):
         return sum(item.subtotal() for item in self.items.all())
 
     def save(self, *args, **kwargs):
-        """Override save to update total"""
+        """Override save to update total and create notifications"""
+        is_new = self.pk is None
+        old_status = None
+        if not is_new:
+            try:
+                old_instance = ProcurementOrder.objects.get(pk=self.pk)
+                old_status = old_instance.status
+            except ProcurementOrder.DoesNotExist:
+                pass
+        
         self.total_amount = self.calculate_total()
         super().save(*args, **kwargs)
+        
+        # Create notifications using service
+        from .services import NotificationService
+        
+        if is_new:
+            # New order created - PR alert
+            NotificationService.create_procurement_alert(self, alert_type='PR')
+        elif old_status and old_status != self.status:
+            # Status changed - PO alert
+            NotificationService.create_procurement_alert(self, alert_type='PO')
+            # If received, create invoice alert
+            if self.status == 'RECEIVED':
+                NotificationService.create_procurement_alert(self, alert_type='Invoice')
 
     def is_overdue(self):
         """Check if order is overdue"""
@@ -222,6 +244,9 @@ class Notification(TimestampMixin):
         ('ORDER_OVERDUE', 'Order Overdue'),
         ('STOCK_PARITY', 'Stock Parity Issue'),
         ('SUPPLIER_RATING', 'Supplier Rating Update'),
+        ('PR_ALERT', 'Purchase Request Alert'),
+        ('PO_ALERT', 'Purchase Order Alert'),
+        ('INVOICE_ALERT', 'Invoice Alert'),
     ]
 
     PRIORITY_CHOICES = [
@@ -275,4 +300,23 @@ class StockParity(TimestampMixin):
         self.resolved_by = user
         self.resolved_at = timezone.now()
         self.save()
+
+
+class SupplierEvaluation(TimestampMixin):
+    """Supplier Evaluation model for tracking ratings and notes"""
+    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, related_name='evaluations')
+    rating = models.DecimalField(
+        max_digits=3,
+        decimal_places=2,
+        validators=[MinValueValidator(0.00), MaxValueValidator(5.00)]
+    )
+    notes = models.TextField(blank=True)
+    evaluated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name_plural = "Supplier Evaluations"
+
+    def __str__(self):
+        return f"{self.supplier.name} - {self.rating}/5.0 - {self.created_at.strftime('%Y-%m-%d')}"
 

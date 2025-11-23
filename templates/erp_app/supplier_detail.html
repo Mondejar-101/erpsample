@@ -90,6 +90,15 @@
                 <div class="mt-3">
                     <p><strong>Total Orders:</strong> {{ supplier.total_orders }}</p>
                 </div>
+                
+                <div class="mt-3">
+                    <a href="{% url 'supplier_evaluate' supplier.pk %}" class="btn btn-primary">
+                        <span class="icon">⭐</span> Add Evaluation
+                    </a>
+                    <a href="{% url 'supplier_evaluations' supplier.pk %}" class="btn btn-outline-primary">
+                        <span class="icon">📊</span> View Evaluations
+                    </a>
+                </div>
             </div>
         </div>
     </div>

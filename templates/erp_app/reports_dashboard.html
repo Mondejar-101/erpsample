@@ -1,9 +1,15 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Reports & Dashboards - ERP System{% endblock %}
 
 {% block content %}
-<h1 class="mb-4"><span class="icon">📈</span> Reports & Analytics Dashboard</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><span class="icon">📈</span> Reports & Analytics Dashboard</h1>
+    <button type="button" class="btn btn-primary" onclick="exportToPDF('dashboard')">
+        <span class="icon">📄</span> Export to PDF
+    </button>
+</div>
 
 <!-- Stock by Category -->
 <div class="card mb-4">
@@ -162,5 +168,52 @@
         {% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/jspdf.umd.min.js' %}"></script>
+<script>
+function exportToPDF(type) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    doc.setFontSize(18);
+    doc.text('Dashboard Report', 14, 20);
+    doc.setFontSize(12);
+    doc.text('Generated: ' + new Date().toLocaleString(), 14, 30);
+    
+    let y = 40;
+    doc.setFontSize(12);
+    
+    // Stock by Category
+    doc.text('Stock by Category', 14, y);
+    y += 10;
+    doc.setFontSize(10);
+    {% for category in stock_by_category %}
+        if (y > 270) {
+            doc.addPage();
+            y = 20;
+        }
+        doc.text('{{ category.category__name|default:"Uncategorized" }}: {{ category.total_items }} items, ${{ category.total_value|floatformat:2|default:"0.00" }}', 20, y);
+        y += 8;
+    {% endfor %}
+    
+    y += 10;
+    doc.setFontSize(12);
+    doc.text('Low Stock Items', 14, y);
+    y += 10;
+    doc.setFontSize(10);
+    {% for item in low_stock_items %}
+        if (y > 270) {
+            doc.addPage();
+            y = 20;
+        }
+        doc.text('{{ item.name }} ({{ item.sku }}): {{ item.current_stock }}', 20, y);
+        y += 8;
+    {% endfor %}
+    
+    doc.save('dashboard-report.pdf');
+}
+</script>
 {% endblock %}
 

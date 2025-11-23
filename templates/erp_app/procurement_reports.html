@@ -1,9 +1,14 @@
 {% extends 'base.html' %}
-
+{% load static %}
 {% block title %}Procurement Reports - ERP System{% endblock %}
 
 {% block content %}
-<h1 class="mb-4"><span class="icon">📊</span> Procurement Reports</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><span class="icon">📊</span> Procurement Reports</h1>
+    <button type="button" class="btn btn-primary" onclick="exportToPDF('procurement-report')">
+        <span class="icon">📄</span> Export to PDF
+    </button>
+</div>
 
 <!-- Date Range Filter -->
 <div class="card mb-4">
@@ -115,5 +120,52 @@
 </div>
 
 <a href="{% url 'procurement_list' %}" class="btn btn-secondary">Back to Orders</a>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/jspdf.umd.min.js' %}"></script>
+<script>
+function exportToPDF(type) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    doc.setFontSize(18);
+    doc.text('Procurement Report', 14, 20);
+    doc.setFontSize(12);
+    doc.text('Period: Last {{ days }} days', 14, 30);
+    doc.text('Generated: ' + new Date().toLocaleString(), 14, 40);
+    
+    let y = 50;
+    doc.setFontSize(14);
+    doc.text('Total Procurement Value: ${{ total_value|floatformat:2 }}', 14, y);
+    y += 20;
+    
+    // Orders by Status
+    doc.setFontSize(12);
+    doc.text('Orders by Status', 14, y);
+    y += 10;
+    doc.setFontSize(10);
+    {% for status_data in orders_by_status %}
+        doc.text('{{ status_data.status }}: {{ status_data.count }}', 20, y);
+        y += 8;
+    {% endfor %}
+    
+    y += 10;
+    doc.setFontSize(12);
+    doc.text('Top Suppliers', 14, y);
+    y += 10;
+    doc.setFontSize(10);
+    {% for supplier in top_suppliers %}
+        if (y > 270) {
+            doc.addPage();
+            y = 20;
+        }
+        doc.text('{{ supplier.name }}: ${{ supplier.total_order_value|floatformat:2|default:"0.00" }} ({{ supplier.order_count }} orders)', 20, y);
+        y += 8;
+    {% endfor %}
+    
+    doc.save('procurement-report.pdf');
+}
+</script>
 {% endblock %}
 

@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ supplier.name }} - Evaluations{% endblock %}
+
+{% block content %}
+<h1 class="mb-4"><span class="icon">⭐</span> Supplier Evaluations: {{ supplier.name }}</h1>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Performance Summary</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Average Rating:</strong> {{ supplier.rating }}/5.0</p>
+                <p><strong>Total Orders:</strong> {{ performance_data.total_orders }}</p>
+                <p><strong>On-Time Delivery Rate:</strong> {{ performance_data.on_time_rate }}%</p>
+                <p><strong>Performance Status:</strong> 
+                    <span class="badge bg-{% if performance_data.performance_status == 'Excellent' %}success{% elif performance_data.performance_status == 'Good' %}info{% elif performance_data.performance_status == 'Average' %}warning{% else %}danger{% endif %}">
+                        {{ performance_data.performance_status }}
+                    </span>
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5>Actions</h5>
+            </div>
+            <div class="card-body">
+                <a href="{% url 'supplier_evaluate' supplier.pk %}" class="btn btn-primary mb-2">
+                    <span class="icon">➕</span> Add Evaluation
+                </a>
+                <br>
+                <button type="button" class="btn btn-outline-primary" onclick="exportToPDF('supplier-performance')">
+                    <span class="icon">📄</span> Export Performance Report
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5>Evaluation History</h5>
+    </div>
+    <div class="card-body">
+        {% if evaluations %}
+            <div class="table-responsive">
+                <table class="table" id="evaluations-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Rating</th>
+                            <th>Notes</th>
+                            <th>Evaluated By</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for evaluation in evaluations %}
+                            <tr>
+                                <td>{{ evaluation.created_at|date:"M d, Y H:i" }}</td>
+                                <td>
+                                    <span class="badge bg-primary">{{ evaluation.rating }}/5.0</span>
+                                </td>
+                                <td>{{ evaluation.notes|default:"—" }}</td>
+                                <td>{{ evaluation.evaluated_by.username|default:"System" }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted">No evaluations found. <a href="{% url 'supplier_evaluate' supplier.pk %}">Add the first evaluation</a></p>
+        {% endif %}
+    </div>
+</div>
+
+<a href="{% url 'supplier_detail' supplier.pk %}" class="btn btn-secondary mt-3">Back to Supplier Details</a>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/jspdf.umd.min.js' %}"></script>
+<script>
+function exportToPDF(type) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    doc.setFontSize(18);
+    doc.text('Supplier Performance Report', 14, 20);
+    doc.setFontSize(12);
+    doc.text('Supplier: {{ supplier.name }}', 14, 30);
+    doc.text('Generated: ' + new Date().toLocaleString(), 14, 40);
+    
+    let y = 50;
+    doc.setFontSize(10);
+    doc.text('Average Rating: {{ supplier.rating }}/5.0', 14, y);
+    y += 10;
+    doc.text('Total Orders: {{ performance_data.total_orders }}', 14, y);
+    y += 10;
+    doc.text('On-Time Rate: {{ performance_data.on_time_rate }}%', 14, y);
+    y += 10;
+    doc.text('Performance Status: {{ performance_data.performance_status }}', 14, y);
+    y += 20;
+    
+    const table = document.getElementById('evaluations-table');
+    if (table) {
+        doc.setFontSize(12);
+        doc.text('Evaluation History', 14, y);
+        y += 10;
+        doc.setFontSize(10);
+        
+        const rows = table.querySelectorAll('tbody tr');
+        rows.forEach((row, index) => {
+            if (y > 270) {
+                doc.addPage();
+                y = 20;
+            }
+            const cells = row.querySelectorAll('td');
+            if (cells.length >= 4) {
+                doc.text(cells[0].textContent.trim(), 14, y);
+                doc.text(cells[1].textContent.trim(), 60, y);
+                doc.text(cells[2].textContent.trim().substring(0, 40), 90, y);
+                doc.text(cells[3].textContent.trim(), 150, y);
+                y += 8;
+            }
+        });
+    }
+    
+    doc.save('supplier-performance-{{ supplier.name }}.pdf');
+}
+</script>
+{% endblock %}
+

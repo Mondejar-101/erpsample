@@ -4,32 +4,46 @@ A comprehensive Django-based ERP system with stock monitoring, supplier evaluati
 
 ## Features
 
-### 1. Stock Monitoring Dashboard & Parity
+### 1. Stock Monitoring Dashboard & Parity (On-demand)
+- ✅ View Low Stock Dashboard (on-demand) - `/stock/low-stock-dashboard/`
+- ✅ View low stock suggestions (informational)
+- ✅ Export Low Stock to PDF
 - Real-time stock monitoring with low stock alerts
 - Stock parity tracking to identify discrepancies
 - Product details with transaction history
 - Stock status indicators (In Stock, Low Stock, Out of Stock)
 
 ### 2. Supplier Evaluation
+- ✅ Add rating (0.0 - 5.0)
+- ✅ Add evaluation notes (optional)
+- ✅ View Supplier Evaluations/Scores
+- ✅ Export Supplier Performance to PDF
 - Supplier performance metrics (rating, on-time delivery, quality score)
 - Supplier detail pages with order history
 - Performance status indicators (Excellent, Good, Average, Poor)
 - Supplier ranking and comparison
 
 ### 3. Procurement Reports
+- ✅ View basic procurement report summaries
+- ✅ Export Report to PDF
 - Procurement order management
 - Order status tracking (Pending, Approved, Ordered, Received, Cancelled)
 - Procurement analytics and reports
 - Top suppliers by order value
 - Orders by status breakdown
 
-### 4. Notifications
+### 4. Notifications (In-app only)
+- ✅ View in-app notifications
+- ✅ Mark notification read/dismiss
+- ✅ Receive PR/PO/Invoice alerts
 - System-wide notification system
 - Priority-based notifications (Low, Medium, High, Urgent)
-- Notification types: Low Stock, Order Due, Order Overdue, Stock Parity, Supplier Rating
+- Notification types: Low Stock, Order Due, Order Overdue, Stock Parity, Supplier Rating, PR/PO/Invoice Alerts
 - Read/Unread notification management
 
 ### 5. Reports & Dashboards
+- ✅ View Dashboards (Pending Requests, Low Stock, Spend by Supplier, Flagged Requests)
+- ✅ Export Dashboard Data to PDF
 - Comprehensive analytics dashboard
 - Stock by category reports
 - Supplier performance reports
@@ -39,9 +53,10 @@ A comprehensive Django-based ERP system with stock monitoring, supplier evaluati
 ## Technology Stack
 
 - **Backend**: Django 4.2.7
-- **Database**: SQLite (default, can be changed to PostgreSQL/MySQL)
-- **Frontend**: Bootstrap 5.3.0
-- **Icons**: Bootstrap Icons
+- **Database**: PostgreSQL (configured, see setup instructions)
+- **Frontend**: HTML, CSS, JavaScript (custom, no Bootstrap)
+- **PDF Export**: jsPDF (client-side, offline-capable)
+- **Architecture**: OOP with Service Layer pattern
 
 ## Installation & Setup
 
@@ -72,18 +87,39 @@ A comprehensive Django-based ERP system with stock monitoring, supplier evaluati
    pip install -r requirements.txt
    ```
 
-4. **Run migrations**
+4. **Configure PostgreSQL Database**
+   - Install PostgreSQL if not already installed
+   - Create database: `CREATE DATABASE erp_db;`
+   - Set environment variables (optional):
+     ```bash
+     # Windows PowerShell
+     $env:DB_NAME="erp_db"
+     $env:DB_USER="postgres"
+     $env:DB_PASSWORD="your_password"
+     $env:DB_HOST="localhost"
+     $env:DB_PORT="5432"
+     
+     # Linux/Mac
+     export DB_NAME=erp_db
+     export DB_USER=postgres
+     export DB_PASSWORD=your_password
+     export DB_HOST=localhost
+     export DB_PORT=5432
+     ```
+   - Or update `erp_project/settings.py` directly with database credentials
+
+5. **Run migrations**
    ```bash
    python manage.py makemigrations
    python manage.py migrate
    ```
 
-5. **Create a superuser (for admin access)**
+6. **Create a superuser (for admin access)**
    ```bash
    python manage.py createsuperuser
    ```
 
-6. **Run the development server**
+7. **Run the development server**
    ```bash
    python manage.py runserver
    ```
@@ -103,6 +139,8 @@ erp/
 ├── erp_app/             # Main application
 │   ├── models.py        # Database models (OOP-based)
 │   ├── views.py         # Class-based views
+│   ├── services.py      # Business logic services (OOP)
+│   ├── forms.py         # Django forms
 │   ├── urls.py          # App URL configuration
 │   └── admin.py         # Admin configuration
 ├── templates/           # HTML templates
@@ -119,16 +157,26 @@ The project follows Object-Oriented Programming principles:
 
 1. **Abstract Base Classes**: `TimestampMixin` and `BaseEntity` provide reusable functionality
 2. **Inheritance**: Models inherit from base classes to share common fields and methods
-3. **Encapsulation**: Business logic is encapsulated within model methods
+3. **Encapsulation**: Business logic is encapsulated in Service Layer (not in views/controllers)
 4. **Polymorphism**: Class-based views demonstrate polymorphic behavior
 5. **Composition**: Models use relationships to compose complex data structures
 
 ### Key OOP Features:
 
 - **Abstract Models**: `TimestampMixin` and `BaseEntity` are abstract base classes
+- **Service Layer**: All business logic is in `erp_app/services.py` (separated from views)
 - **Method Overriding**: Models override `save()` methods to add custom logic
 - **Class Methods**: Models include business logic methods (e.g., `calculate_performance_score()`, `is_low_stock()`)
 - **Class-Based Views**: All views use Django's class-based view system
+
+### Service Layer Architecture:
+
+Business rules are NOT in Controllers/Views/API. All business logic is in:
+- `StockMonitoringService` - Stock monitoring logic
+- `SupplierEvaluationService` - Supplier evaluation logic
+- `ProcurementReportService` - Procurement report logic
+- `NotificationService` - Notification logic
+- `ReportExportService` - Report export logic
 
 ## Usage
 
@@ -187,10 +235,15 @@ The project follows Object-Oriented Programming principles:
 
 ## Development Notes
 
-- The system uses SQLite by default for easy setup
-- For production, consider switching to PostgreSQL or MySQL
+- **Database**: PostgreSQL is configured (see setup instructions)
+- **PDF Export**: Uses jsPDF library (client-side, offline-capable)
+  - Currently uses CDN, can be downloaded for full offline use
+  - See `MVP_FEATURES.md` for instructions
+- **Business Logic**: All business rules are in Service Layer (`erp_app/services.py`)
+- **Frontend**: Custom HTML/CSS/JS (no Bootstrap dependency)
 - Authentication is required for all views (LoginRequiredMixin)
 - The admin panel provides full CRUD operations for all models
+- All HTML templates extend `base.html` which loads `custom.css` - all templates use CSS properly
 
 ## Future Enhancements
 

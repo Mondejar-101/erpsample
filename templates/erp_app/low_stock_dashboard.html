@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Low Stock Dashboard - ERP System{% endblock %}
+
+{% block content %}
+<h1 class="mb-4"><span class="icon">⚠️</span> Low Stock Dashboard</h1>
+
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5>Low Stock Products</h5>
+        <button type="button" class="btn btn-primary" onclick="exportToPDF('low-stock')">
+            <span class="icon">📄</span> Export to PDF
+        </button>
+    </div>
+    <div class="card-body">
+        {% if low_stock_products %}
+            <div class="table-responsive">
+                <table class="table" id="low-stock-table">
+                    <thead>
+                        <tr>
+                            <th>SKU</th>
+                            <th>Product Name</th>
+                            <th>Category</th>
+                            <th>Current Stock</th>
+                            <th>Reorder Level</th>
+                            <th>Suggested Quantity</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for suggestion in low_stock_suggestions %}
+                            <tr>
+                                <td>{{ suggestion.product.sku }}</td>
+                                <td>{{ suggestion.product.name }}</td>
+                                <td>{{ suggestion.product.category.name|default:"N/A" }}</td>
+                                <td>{{ suggestion.current_stock }} {{ suggestion.product.unit_of_measure }}</td>
+                                <td>{{ suggestion.reorder_level }}</td>
+                                <td>{{ suggestion.suggested_quantity }}</td>
+                                <td>
+                                    {% if suggestion.status == 'Out of Stock' %}
+                                        <span class="badge bg-danger">Out of Stock</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">Low Stock</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted">No low stock products found.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5>Low Stock Suggestions</h5>
+    </div>
+    <div class="card-body">
+        {% if low_stock_suggestions %}
+            <div class="list-group">
+                {% for suggestion in low_stock_suggestions %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">{{ suggestion.product.name }} ({{ suggestion.product.sku }})</h6>
+                                <p class="mb-1 text-muted">
+                                    Current: {{ suggestion.current_stock }} | 
+                                    Reorder Level: {{ suggestion.reorder_level }} | 
+                                    Suggested Reorder: {{ suggestion.suggested_quantity }}
+                                </p>
+                            </div>
+                            <span class="badge bg-{% if suggestion.status == 'Out of Stock' %}danger{% else %}warning{% endif %}">
+                                {{ suggestion.status }}
+                            </span>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-muted">No low stock suggestions available.</p>
+        {% endif %}
+    </div>
+</div>
+
+<a href="{% url 'stock_list' %}" class="btn btn-secondary mt-3">Back to Stock List</a>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/jspdf.umd.min.js' %}"></script>
+<script>
+function exportToPDF(type) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    doc.setFontSize(18);
+    doc.text('Low Stock Report', 14, 20);
+    doc.setFontSize(12);
+    doc.text('Generated: ' + new Date().toLocaleString(), 14, 30);
+    
+    let y = 40;
+    const table = document.getElementById('low-stock-table');
+    if (table) {
+        const rows = table.querySelectorAll('tbody tr');
+        doc.setFontSize(10);
+        
+        // Table headers
+        doc.text('SKU', 14, y);
+        doc.text('Product', 40, y);
+        doc.text('Stock', 100, y);
+        doc.text('Status', 130, y);
+        y += 10;
+        
+        rows.forEach((row, index) => {
+            if (y > 270) {
+                doc.addPage();
+                y = 20;
+            }
+            const cells = row.querySelectorAll('td');
+            if (cells.length >= 7) {
+                doc.text(cells[0].textContent.trim(), 14, y);
+                doc.text(cells[1].textContent.trim().substring(0, 20), 40, y);
+                doc.text(cells[3].textContent.trim(), 100, y);
+                doc.text(cells[6].textContent.trim(), 130, y);
+                y += 8;
+            }
+        });
+    }
+    
+    doc.save('low-stock-report.pdf');
+}
+</script>
+{% endblock %}
+

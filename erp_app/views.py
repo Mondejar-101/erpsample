@@ -15,7 +15,12 @@ from decimal import Decimal
 
 from .models import (
     Product, Supplier, ProcurementOrder, StockTransaction,
-    Notification, StockParity, Category
+    Notification, StockParity, Category, SupplierEvaluation
+)
+from .forms import SupplierEvaluationForm
+from .services import (
+    StockMonitoringService, SupplierEvaluationService,
+    ProcurementReportService, NotificationService, ReportExportService
 )
 
 
@@ -374,4 +379,108 @@ class RegisterView(CreateView):
         login(self.request, self.object)
         messages.success(self.request, f'Account created successfully! Welcome, {self.object.username}!')
         return response
+
+
+# Stock Monitoring Dashboard (On-demand)
+class LowStockDashboardView(LoginRequiredMixin, TemplateView):
+    """Low Stock Dashboard View (On-demand)"""
+    template_name = 'erp_app/low_stock_dashboard.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['low_stock_products'] = StockMonitoringService.get_low_stock_products()
+        context['low_stock_suggestions'] = StockMonitoringService.get_low_stock_suggestions()
+        context['out_of_stock_products'] = StockMonitoringService.get_out_of_stock_products()
+        return context
+
+
+# Supplier Evaluation Views
+class SupplierEvaluationCreateView(LoginRequiredMixin, CreateView):
+    """Create Supplier Evaluation View"""
+    model = SupplierEvaluation
+    form_class = SupplierEvaluationForm
+    template_name = 'erp_app/supplier_evaluation_form.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        self.supplier = get_object_or_404(Supplier, pk=kwargs['supplier_id'])
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        evaluation = form.save(commit=False)
+        evaluation.supplier = self.supplier
+        evaluation.evaluated_by = self.request.user
+        evaluation.save()
+        
+        # Use service to update supplier rating
+        SupplierEvaluationService.update_supplier_rating(self.supplier)
+        
+        messages.success(self.request, f'Evaluation added for {self.supplier.name}')
+        return redirect('supplier_evaluations', pk=self.supplier.pk)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['supplier'] = self.supplier
+        return context
+
+
+class SupplierEvaluationsView(LoginRequiredMixin, DetailView):
+    """View Supplier Evaluations"""
+    model = Supplier
+    template_name = 'erp_app/supplier_evaluations.html'
+    context_object_name = 'supplier'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['evaluations'] = SupplierEvaluationService.get_supplier_evaluations(self.object)
+        context['performance_data'] = SupplierEvaluationService.get_supplier_performance_data(self.object)
+        return context
+
+
+# Export Views (JSON endpoints for jsPDF)
+class ExportLowStockView(LoginRequiredMixin, TemplateView):
+    """Export Low Stock Data as JSON for PDF generation"""
+    template_name = 'erp_app/export_low_stock.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['export_data'] = ReportExportService.prepare_low_stock_data()
+        return context
+
+
+class ExportSupplierPerformanceView(LoginRequiredMixin, TemplateView):
+    """Export Supplier Performance Data as JSON for PDF generation"""
+    template_name = 'erp_app/export_supplier_performance.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        supplier_id = self.request.GET.get('supplier_id')
+        supplier = None
+        if supplier_id:
+            try:
+                supplier = Supplier.objects.get(pk=supplier_id)
+            except Supplier.DoesNotExist:
+                pass
+        context['export_data'] = ReportExportService.prepare_supplier_performance_data(supplier)
+        return context
+
+
+class ExportProcurementReportView(LoginRequiredMixin, TemplateView):
+    """Export Procurement Report Data as JSON for PDF generation"""
+    template_name = 'erp_app/export_procurement_report.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        days = int(self.request.GET.get('days', 30))
+        context['export_data'] = ReportExportService.prepare_procurement_report_data(days)
+        return context
+
+
+class ExportDashboardView(LoginRequiredMixin, TemplateView):
+    """Export Dashboard Data as JSON for PDF generation"""
+    template_name = 'erp_app/export_dashboard.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['export_data'] = ReportExportService.prepare_dashboard_data()
+        return context
 
