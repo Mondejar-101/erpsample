@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+
+{% block title %}Reports & Dashboards - ERP System{% endblock %}
+
+{% block content %}
+<h1 class="mb-4"><span class="icon">📈</span> Reports & Analytics Dashboard</h1>
+
+<!-- Stock by Category -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5>Stock by Category</h5>
+    </div>
+    <div class="card-body">
+        {% if stock_by_category %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Total Items</th>
+                            <th>Total Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for category in stock_by_category %}
+                            <tr>
+                                <td>{{ category.category__name|default:"Uncategorized" }}</td>
+                                <td>{{ category.total_items }}</td>
+                                <td>${{ category.total_value|floatformat:2|default:"0.00" }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted">No data available</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Supplier Performance -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5>Supplier Performance</h5>
+    </div>
+    <div class="card-body">
+        {% if supplier_performance %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Supplier</th>
+                            <th>Rating</th>
+                            <th>Total Orders</th>
+                            <th>Avg Order Value</th>
+                            <th>On-Time Rate</th>
+                            <th>Quality Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for supplier in supplier_performance %}
+                            <tr>
+                                <td>{{ supplier.name }}</td>
+                                <td>
+                                    <span class="badge bg-primary">{{ supplier.rating }}/5.0</span>
+                                </td>
+                                <td>{{ supplier.order_count }}</td>
+                                <td>${{ supplier.avg_order_value|floatformat:2|default:"0.00" }}</td>
+                                <td>{{ supplier.on_time_delivery_rate }}%</td>
+                                <td>{{ supplier.quality_score }}%</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted">No data available</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Low Stock Items -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5>Low Stock Items</h5>
+    </div>
+    <div class="card-body">
+        {% if low_stock_items %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>SKU</th>
+                            <th>Current Stock</th>
+                            <th>Reorder Level</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in low_stock_items %}
+                            <tr>
+                                <td>{{ item.name }}</td>
+                                <td>{{ item.sku }}</td>
+                                <td>{{ item.current_stock }}</td>
+                                <td>{{ item.reorder_level }}</td>
+                                <td>
+                                    {% if item.current_stock == 0 %}
+                                        <span class="badge bg-danger">Out of Stock</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">Low Stock</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted">No low stock items</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Recent Orders -->
+<div class="card">
+    <div class="card-header">
+        <h5>Recent Orders</h5>
+    </div>
+    <div class="card-body">
+        {% if recent_orders %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Order Number</th>
+                            <th>Supplier</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Total Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in recent_orders %}
+                            <tr>
+                                <td>{{ order.order_number }}</td>
+                                <td>{{ order.supplier.name }}</td>
+                                <td>{{ order.order_date|date:"M d, Y" }}</td>
+                                <td>
+                                    <span class="badge bg-{% if order.status == 'RECEIVED' %}success{% elif order.status == 'CANCELLED' %}danger{% elif order.status == 'PENDING' %}warning{% else %}info{% endif %}">
+                                        {{ order.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>${{ order.total_amount }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted">No recent orders</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

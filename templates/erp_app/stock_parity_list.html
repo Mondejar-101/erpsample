@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}Stock Parity Issues - ERP System{% endblock %}
+
+{% block content %}
+<h1 class="mb-4"><span class="icon">⚠️</span> Stock Parity Issues</h1>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="btn-group" role="group">
+            <a href="?resolved=false" class="btn btn-{% if resolved == 'false' %}primary{% else %}outline-primary{% endif %}">
+                Unresolved
+            </a>
+            <a href="?resolved=true" class="btn btn-{% if resolved == 'true' %}primary{% else %}outline-primary{% endif %}">
+                Resolved
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5>Parity Issues</h5>
+    </div>
+    <div class="card-body">
+        {% if parities %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Expected Quantity</th>
+                            <th>Actual Quantity</th>
+                            <th>Discrepancy</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for parity in parities %}
+                            <tr>
+                                <td>{{ parity.product.name }}</td>
+                                <td>{{ parity.expected_quantity }}</td>
+                                <td>{{ parity.actual_quantity }}</td>
+                                <td>
+                                    <span class="badge bg-{% if parity.discrepancy > 0 %}success{% else %}danger{% endif %}">
+                                        {{ parity.discrepancy|stringformat:"+d" }}
+                                    </span>
+                                </td>
+                                <td>{{ parity.created_at|date:"M d, Y" }}</td>
+                                <td>
+                                    {% if parity.resolved %}
+                                        <span class="badge bg-success">Resolved</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">Unresolved</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if not parity.resolved %}
+                                        <a href="{% url 'resolve_parity' parity.pk %}" class="btn btn-sm btn-primary">
+                                            Resolve
+                                        </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted">No parity issues found.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

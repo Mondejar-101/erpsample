@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}Notifications - ERP System{% endblock %}
+
+{% block content %}
+<h1 class="mb-4"><span class="icon">🔔</span> Notifications</h1>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="btn-group" role="group">
+                <a href="?read=false" class="btn btn-{% if read == 'false' %}primary{% else %}outline-primary{% endif %}">
+                    Unread ({{ unread_count }})
+                </a>
+                <a href="?read=true" class="btn btn-{% if read == 'true' %}primary{% else %}outline-primary{% endif %}">
+                    Read
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5>Notifications</h5>
+    </div>
+    <div class="card-body">
+        {% if notifications %}
+            <div class="list-group">
+                {% for notification in notifications %}
+                    <div class="list-group-item {% if not notification.is_read %}list-group-item-action{% endif %}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <h6 class="mb-1">{{ notification.title }}</h6>
+                                    <span class="badge bg-{{ notification.priority|lower }}">{{ notification.priority }}</span>
+                                </div>
+                                <p class="mb-1">{{ notification.message }}</p>
+                                <small class="text-muted">
+                                    {{ notification.created_at|timesince }} ago
+                                    <span class="badge bg-secondary">{{ notification.get_notification_type_display }}</span>
+                                </small>
+                            </div>
+                            {% if not notification.is_read %}
+                                <a href="{% url 'mark_notification_read' notification.pk %}" class="btn btn-sm btn-outline-primary ms-2">
+                                    Mark as Read
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-muted">No notifications found.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

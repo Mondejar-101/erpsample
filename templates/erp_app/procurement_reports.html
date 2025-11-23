@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}Procurement Reports - ERP System{% endblock %}
+
+{% block content %}
+<h1 class="mb-4"><span class="icon">📊</span> Procurement Reports</h1>
+
+<!-- Date Range Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Report Period (Days)</label>
+                <select name="days" class="form-select">
+                    <option value="7" {% if days == 7 %}selected{% endif %}>Last 7 Days</option>
+                    <option value="30" {% if days == 30 %}selected{% endif %}>Last 30 Days</option>
+                    <option value="90" {% if days == 90 %}selected{% endif %}>Last 90 Days</option>
+                    <option value="365" {% if days == 365 %}selected{% endif %}>Last Year</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <button type="submit" class="btn btn-primary d-block">Update</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Summary Statistics -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card stat-card">
+            <div class="card-body">
+                <h5 class="card-title">Total Procurement Value</h5>
+                <h2>${{ total_value|floatformat:2 }}</h2>
+                <p class="mb-0">Last {{ days }} days</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card stat-card info">
+            <div class="card-body">
+                <h5 class="card-title">Total Orders</h5>
+                <h2>{{ orders_by_status|length }}</h2>
+                <p class="mb-0">Last {{ days }} days</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Orders by Status -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5>Orders by Status</h5>
+    </div>
+    <div class="card-body">
+        {% if orders_by_status %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Status</th>
+                            <th>Count</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for status_data in orders_by_status %}
+                            <tr>
+                                <td>{{ status_data.status }}</td>
+                                <td>{{ status_data.count }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted">No data available</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Top Suppliers -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5>Top Suppliers by Order Value</h5>
+    </div>
+    <div class="card-body">
+        {% if top_suppliers %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Supplier</th>
+                            <th>Total Order Value</th>
+                            <th>Order Count</th>
+                            <th>Average Order Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for supplier in top_suppliers %}
+                            <tr>
+                                <td>{{ supplier.name }}</td>
+                                <td>${{ supplier.total_order_value|floatformat:2|default:"0.00" }}</td>
+                                <td>{{ supplier.order_count }}</td>
+                                <td>${{ supplier.avg_order_value|floatformat:2|default:"0.00" }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted">No data available</p>
+        {% endif %}
+    </div>
+</div>
+
+<a href="{% url 'procurement_list' %}" class="btn btn-secondary">Back to Orders</a>
+{% endblock %}
+

@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Resolve Stock Parity - ERP System{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Resolve Stock Parity Issue</h1>
+
+<div class="card">
+    <div class="card-header">
+        <h5>Parity Details</h5>
+    </div>
+    <div class="card-body">
+        <table class="table">
+            <tr>
+                <th>Product:</th>
+                <td>{{ parity.product.name }}</td>
+            </tr>
+            <tr>
+                <th>Expected Quantity:</th>
+                <td>{{ parity.expected_quantity }}</td>
+            </tr>
+            <tr>
+                <th>Actual Quantity:</th>
+                <td>{{ parity.actual_quantity }}</td>
+            </tr>
+            <tr>
+                <th>Discrepancy:</th>
+                <td>
+                    <span class="badge bg-{% if parity.discrepancy > 0 %}success{% else %}danger{% endif %}">
+                        {{ parity.discrepancy|stringformat:"+d" }}
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <th>Reason:</th>
+                <td>{{ parity.reason|default:"N/A" }}</td>
+            </tr>
+        </table>
+
+        <form method="post">
+            {% csrf_token %}
+            <p>Are you sure you want to mark this parity issue as resolved?</p>
+            <button type="submit" class="btn btn-primary">Resolve Issue</button>
+            <a href="{% url 'stock_parity_list' %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

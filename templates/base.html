@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ERP System{% endblock %}</title>
+    {% load static %}
+    <link href="{% static 'custom.css' %}" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            {% if user.is_authenticated %}
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 sidebar">
+                <h4 class="text-white mb-4">
+                    <span class="icon">📦</span> ERP System
+                </h4>
+                <ul class="nav">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
+                            <span class="icon">📊</span> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'stock' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'stock_list' %}">
+                            <span class="icon">📦</span> Stock Monitoring
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'supplier' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'supplier_list' %}">
+                            <span class="icon">👥</span> Suppliers
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'procurement' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'procurement_list' %}">
+                            <span class="icon">🛒</span> Procurement
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'notification' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'notification_list' %}">
+                            <span class="icon">🔔</span> Notifications
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'reports' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'reports_dashboard' %}">
+                            <span class="icon">📈</span> Reports
+                        </a>
+                    </li>
+                </ul>
+                <hr class="text-white">
+                <ul class="nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/">
+                            <span class="icon">⚙️</span> Admin Panel
+                        </a>
+                    </li>
+                </ul>
+                <hr class="text-white">
+                <ul class="nav">
+                    <li class="nav-item">
+                        <span class="nav-link text-white">
+                            <span class="icon">👤</span> {{ user.username }}
+                        </span>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'logout' %}">
+                            <span class="icon">🚪</span> Logout
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            {% endif %}
+
+            <!-- Main Content -->
+            <main class="{% if user.is_authenticated %}col-md-9 col-lg-10 ms-sm-auto{% else %}col-12{% endif %}">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <script src="{% static 'custom.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
+

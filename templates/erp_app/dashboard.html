@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - ERP System{% endblock %}
+
+{% block content %}
+<h1 class="mb-4"><span class="icon">📊</span> Dashboard</h1>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card">
+            <div class="card-body">
+                <h5 class="card-title">Total Products</h5>
+                <h2>{{ total_products }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card warning">
+            <div class="card-body">
+                <h5 class="card-title">Low Stock</h5>
+                <h2>{{ low_stock_products }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card info">
+            <div class="card-body">
+                <h5 class="card-title">Pending Orders</h5>
+                <h2>{{ pending_orders }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card success">
+            <div class="card-body">
+                <h5 class="card-title">Total Stock Value</h5>
+                <h2>${{ total_stock_value|floatformat:2 }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Notifications -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><span class="icon">🔔</span> Recent Notifications</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_notifications %}
+                    <div class="list-group">
+                        {% for notification in recent_notifications %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h6 class="mb-1">{{ notification.title }}</h6>
+                                        <p class="mb-1 text-muted">{{ notification.message|truncatewords:15 }}</p>
+                                        <small class="text-muted">{{ notification.created_at|timesince }} ago</small>
+                                    </div>
+                                    <span class="badge bg-{{ notification.priority|lower }}">{{ notification.priority }}</span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <a href="{% url 'notification_list' %}" class="btn btn-sm btn-outline-primary mt-3">View All</a>
+                {% else %}
+                    <p class="text-muted">No recent notifications</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><span class="icon">↔️</span> Recent Stock Transactions</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_transactions %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Type</th>
+                                    <th>Quantity</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transaction in recent_transactions %}
+                                    <tr>
+                                        <td>{{ transaction.product.name }}</td>
+                                        <td>
+                                            <span class="badge bg-{% if transaction.transaction_type == 'IN' %}success{% else %}warning{% endif %}">
+                                                {{ transaction.get_transaction_type_display }}
+                                            </span>
+                                        </td>
+                                        <td>{{ transaction.quantity }}</td>
+                                        <td>{{ transaction.created_at|date:"M d, Y" }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">No recent transactions</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <!-- Top Suppliers -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><span class="icon">🏆</span> Top Suppliers</h5>
+            </div>
+            <div class="card-body">
+                {% if top_suppliers %}
+                    <div class="list-group">
+                        {% for supplier in top_suppliers %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">{{ supplier.name }}</h6>
+                                        <small class="text-muted">{{ supplier.contact_person }}</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-primary">Rating: {{ supplier.rating }}/5</span>
+                                        <br>
+                                        <small class="text-muted">{{ supplier.total_orders }} orders</small>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <a href="{% url 'supplier_list' %}" class="btn btn-sm btn-outline-primary mt-3">View All Suppliers</a>
+                {% else %}
+                    <p class="text-muted">No suppliers available</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><span class="icon">ℹ️</span> Quick Statistics</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <span class="icon text-danger">❌</span> Out of Stock: <strong>{{ out_of_stock }}</strong>
+                    </li>
+                    <li class="mb-2">
+                        <span class="icon text-warning">⏰</span> Overdue Orders: <strong>{{ overdue_orders }}</strong>
+                    </li>
+                    <li class="mb-2">
+                        <span class="icon text-info">👥</span> Active Suppliers: <strong>{{ total_suppliers }}</strong>
+                    </li>
+                    <li class="mb-2">
+                        <span class="icon text-warning">⚠️</span> Unresolved Parities: <strong>{{ unresolved_parities }}</strong>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

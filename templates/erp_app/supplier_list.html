@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block title %}Suppliers - ERP System{% endblock %}
+
+{% block content %}
+<h1 class="mb-4"><span class="icon">👥</span> Supplier Evaluation</h1>
+
+<!-- Search -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-10">
+                <input type="text" name="search" class="form-control" placeholder="Search suppliers..." value="{{ search }}">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Search</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Supplier List -->
+<div class="card">
+    <div class="card-header">
+        <h5>Suppliers</h5>
+    </div>
+    <div class="card-body">
+        {% if suppliers %}
+            <div class="row">
+                {% for supplier in suppliers %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ supplier.name }}</h5>
+                                <p class="text-muted mb-2">{{ supplier.contact_person }}</p>
+                                <p class="mb-2"><span class="icon">📧</span> {{ supplier.email }}</p>
+                                <p class="mb-3"><span class="icon">📞</span> {{ supplier.phone }}</p>
+                                
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>Rating:</span>
+                                        <strong>{{ supplier.rating }}/5.0</strong>
+                                    </div>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar" role="progressbar" style="width: {% widthratio supplier.rating 5 100 %}%">
+                                            {{ supplier.rating }}/5.0
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row text-center mb-3">
+                                    <div class="col-4">
+                                        <small class="text-muted">Orders</small>
+                                        <div><strong>{{ supplier.total_orders }}</strong></div>
+                                    </div>
+                                    <div class="col-4">
+                                        <small class="text-muted">On-Time</small>
+                                        <div><strong>{{ supplier.on_time_delivery_rate }}%</strong></div>
+                                    </div>
+                                    <div class="col-4">
+                                        <small class="text-muted">Quality</small>
+                                        <div><strong>{{ supplier.quality_score }}%</strong></div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-2">
+                                    <span class="badge bg-{% if supplier.get_performance_status == 'Excellent' %}success{% elif supplier.get_performance_status == 'Good' %}info{% elif supplier.get_performance_status == 'Average' %}warning{% else %}danger{% endif %}">
+                                        {{ supplier.get_performance_status }}
+                                    </span>
+                                </div>
+
+                                <a href="{% url 'supplier_detail' supplier.pk %}" class="btn btn-sm btn-outline-primary">
+                                    View Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+                <nav aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if search %}&search={{ search }}{% endif %}">First</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}">Previous</a>
+                            </li>
+                        {% endif %}
+                        <li class="page-item active">
+                            <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                        </li>
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}">Next</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search %}&search={{ search }}{% endif %}">Last</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        {% else %}
+            <p class="text-muted">No suppliers found.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

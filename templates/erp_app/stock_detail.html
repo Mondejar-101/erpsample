@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ product.name }} - Stock Detail{% endblock %}
+
+{% block content %}
+<h1 class="mb-4"><span class="icon">📦</span> {{ product.name }}</h1>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Product Information</h5>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th>SKU:</th>
+                        <td>{{ product.sku }}</td>
+                    </tr>
+                    <tr>
+                        <th>Category:</th>
+                        <td>{{ product.category.name|default:"N/A" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Current Stock:</th>
+                        <td>
+                            <strong>{{ product.current_stock }} {{ product.unit_of_measure }}</strong>
+                            {% if product.is_low_stock %}
+                                <span class="badge bg-warning ms-2">Low Stock</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Reorder Level:</th>
+                        <td>{{ product.reorder_level }}</td>
+                    </tr>
+                    <tr>
+                        <th>Reorder Quantity:</th>
+                        <td>{{ product.reorder_quantity }}</td>
+                    </tr>
+                    <tr>
+                        <th>Unit Price:</th>
+                        <td>${{ product.unit_price }}</td>
+                    </tr>
+                    <tr>
+                        <th>Total Value:</th>
+                        <td><strong>${{ product.get_total_value|floatformat:2 }}</strong></td>
+                    </tr>
+                    <tr>
+                        <th>Location:</th>
+                        <td>{{ product.location|default:"N/A" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Status:</th>
+                        <td>
+                            {% if product.current_stock == 0 %}
+                                <span class="badge bg-danger">Out of Stock</span>
+                            {% elif product.is_low_stock %}
+                                <span class="badge bg-warning">Low Stock</span>
+                            {% else %}
+                                <span class="badge bg-success">In Stock</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Stock Parity Issues</h5>
+            </div>
+            <div class="card-body">
+                {% if parities %}
+                    {% for parity in parities %}
+                        <div class="alert alert-warning">
+                            <h6>Parity Issue</h6>
+                            <p>Expected: {{ parity.expected_quantity }} | Actual: {{ parity.actual_quantity }}</p>
+                            <p>Discrepancy: {{ parity.discrepancy }}</p>
+                            <a href="{% url 'resolve_parity' parity.pk %}" class="btn btn-sm btn-primary">Resolve</a>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">No parity issues</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header">
+        <h5>Recent Stock Transactions</h5>
+    </div>
+    <div class="card-body">
+        {% if transactions %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Quantity</th>
+                            <th>Reference</th>
+                            <th>User</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transaction in transactions %}
+                            <tr>
+                                <td>{{ transaction.created_at|date:"M d, Y H:i" }}</td>
+                                <td>
+                                    <span class="badge bg-{% if transaction.transaction_type == 'IN' %}success{% else %}warning{% endif %}">
+                                        {{ transaction.get_transaction_type_display }}
+                                    </span>
+                                </td>
+                                <td>{{ transaction.quantity }}</td>
+                                <td>{{ transaction.reference_number|default:"N/A" }}</td>
+                                <td>{{ transaction.user.username|default:"System" }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted">No transactions found</p>
+        {% endif %}
+    </div>
+</div>
+
+<a href="{% url 'stock_list' %}" class="btn btn-secondary mt-3">Back to Stock List</a>
+{% endblock %}
+
