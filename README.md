@@ -263,3 +263,6 @@ This is an MVP project for educational purposes.
 
 For issues or questions, please refer to the Django documentation or create an issue in the project repository.
 
+ok po
+
+
